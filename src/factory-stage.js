@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {BANK,BUMPERS,JUICES,rampPoint} from './table.js';
 import {CabinetDisplay} from './cabinet-display.js';
+import {orderTargets} from './orders.js';
 const at=(x,y,z=0)=>new T.Vector3(x-50,z,y-90);
 const palette=['#ffbb4f','#ce8dff','#a7f970'];
 
@@ -12,7 +13,7 @@ export class FactoryStage{
   this.gold=new T.MeshStandardMaterial({color:'#efc572',metalness:.85,roughness:.22});
   this.emerald=new T.MeshPhysicalMaterial({color:'#12583b',metalness:.45,roughness:.23,clearcoat:1});
   this.glass=new T.MeshPhysicalMaterial({color:'#d5ffe6',transparent:true,opacity:.3,roughness:.1,metalness:.1,clearcoat:1,depthWrite:false});
-  this.buildDisplays();this.buildPrint();this.buildSpinner();this.buildTargets();this.buildConveyor();this.buildLights();this.buildReactions();this.buildMachinery();
+  this.buildDisplays();this.buildPrint();this.buildSpinner();this.buildTargets();this.buildConveyor();this.buildLights();this.buildReactions();this.buildMachinery();this.buildShotGuides();
  }
  mesh(g,m,parent=this.scene){return this.o.mesh(g,m,parent);}
  plane(w,h,material,x,y,z=.15){const m=this.mesh(new T.PlaneGeometry(w,h),material);m.rotation.x=-Math.PI/2;m.position.copy(at(x,y,z));m.castShadow=false;return m;}
@@ -21,7 +22,7 @@ export class FactoryStage{
   const base=this.mesh(new T.BoxGeometry(100,3.5,23),this.o.dark);base.position.copy(at(50,-10,.7));
   this.o.tube([[2,-21],[98,-21],[98,1],[2,1],[2,-21]].map(([x,y])=>at(x,y,3)),.75,this.gold);
   this.scoreGlass=this.texture(1024,240);this.plane(94,19,new T.MeshBasicMaterial({map:this.scoreGlass.texture,toneMapped:false}),50,-10,3.1);
-  this.missionGlass=this.texture(1024,180);this.plane(61,13,new T.MeshBasicMaterial({map:this.missionGlass.texture,toneMapped:false}),50,119,.2);
+  this.missionGlass=this.texture(1024,180);this.plane(76,17,new T.MeshBasicMaterial({map:this.missionGlass.texture,toneMapped:false}),50,119,.2);
   for(const x of[3,97])for(const y of[-19,-1])this.o.cyl(x,y,.6,.3,this.o.metal,3.1);
  }
  buildPrint(){
@@ -101,13 +102,25 @@ export class FactoryStage{
    this.o.tube([at(x,y,h-5),at(x,y-12,h-5),at(x<50?-3:103,y-12,6)],.7,this.gold);
   }
  }
+ buildShotGuides(){
+  this.orderRings=Array.from({length:3},()=>{const mesh=new T.Mesh(new T.RingGeometry(.93,1,48),new T.MeshBasicMaterial({color:'#ffd17a',transparent:true,opacity:.5,depthWrite:false,toneMapped:false}));mesh.rotation.x=-Math.PI/2;mesh.visible=false;this.scene.add(mesh);return mesh;});
+  this.orderArrows=new T.InstancedMesh(new T.ConeGeometry(.8,2.6,3),new T.MeshBasicMaterial({color:'#ffd17a',transparent:true,opacity:.65,depthWrite:false,toneMapped:false}),18);this.orderArrows.count=0;this.scene.add(this.orderArrows);this.guideDummy=new T.Object3D();this.guideUp=new T.Vector3(0,1,0);
+ }
+ updateShotGuides(g,t,reduced){
+  const targets=orderTargets(g);this.orderRings.forEach((ring,i)=>{const target=targets[i];ring.visible=!!target;if(!target)return;ring.position.copy(at(target.x,target.y,.3));ring.scale.setScalar(target.r*(reduced?1:1+Math.sin(t*3.5)*.055));ring.material.opacity=reduced?.5:.4+.15*Math.sin(t*3.5);});
+  let count=0;
+  if(!reduced&&!g.orders?.frenzy)for(const target of targets){const from={x:target.x<40?35:target.x>60?65:50,y:143},direction=new T.Vector3(target.x-from.x,0,target.y-from.y).normalize();for(let i=0;i<5;i++){const u=(i/5+t*.2)%1;this.guideDummy.position.copy(at(from.x+(target.x-from.x)*u,from.y+(target.y-from.y)*u,.45));this.guideDummy.quaternion.setFromUnitVectors(this.guideUp,direction);this.guideDummy.updateMatrix();this.orderArrows.setMatrixAt(count++,this.guideDummy.matrix);}}
+  this.orderArrows.count=count;if(count)this.orderArrows.instanceMatrix.needsUpdate=true;
+ }
+ clear(){this.banner=null;this.display=new CabinetDisplay();}
  event(e){
   this.display.hit(e);
   const captions={spinner:['JUICE SPINNER',`${e.turns||0} SPINS  ·  +${Math.round(e.points||0).toLocaleString()}`],orbit:['ORBIT COMPLETE','KEEP THE JUICE FLOWING'],bottle:['FRESHLY BOTTLED','FILL. CAP. CELEBRATE.'],jackpot:['JUICE JACKPOT!','THE FACTORY IS IN OVERDRIVE'],rainbow:['RAINBOW RUSH!','3 BALLS · TRIPLE POINTS'],ramp:['COLD PRESS LOOP','CONVEYOR SHOT'],skill:['SKILL SHOT!','RIGHT ON THE MONEY'],'pressure-ready':['POWER PRESS!','12 SECONDS · DOUBLE POINTS'],'bank-complete':['TARGET BANK COMPLETE','MULTIPLIER RAISED'],kickback:['FRESH RETURN!','KICKBACK USED · KEEP FLIPPING'],'shot-chain':[`${e.chain} SHOT COMBO`,'LINK DIFFERENT SHOTS'],'extra-ball':['EXTRA BALL!','YOUR NEXT BALL IS ON THE HOUSE'],tilt:['TILT','LET THE TABLE SETTLE']};
-  if(captions[e.type])this.banner={title:captions[e.type][0],note:captions[e.type][1],until:this.o.effects.time+(['rainbow','jackpot'].includes(e.type)?2.4:1.4)};
+  Object.assign(captions,{'order-start':[e.title,e.hint],'order-progress':[e.title,`${e.progress} / ${e.target}  ·  ${e.hint}`],'order-complete':[`ORDER ${e.pack} / 3 FILLED!`,`+${Math.round(e.points||0).toLocaleString()} · ${e.pack===3?'DELIVERY JACKPOT IS LIGHTING':'KICKBACK RELIT'}`],'delivery-ready':['DELIVERY JACKPOT LIT','SHOOT THE GOLDEN BOTTLE'],'delivery-jackpot':['DELIVERY JACKPOT!',`+${Math.round(e.points||0).toLocaleString()} · FACTORY FRENZY`],'frenzy-end':['FRESH ORDERS AWAIT','BUILD YOUR NEXT DELIVERY']});
+  if(captions[e.type]){const priority=['rainbow','jackpot','delivery-jackpot'].includes(e.type)?3:['order-complete','delivery-ready','extra-ball'].includes(e.type)?2:e.type==='order-progress'?0:1;if(this.banner?.until>this.o.effects.time&&this.banner.priority>priority)return;this.banner={title:captions[e.type][0],note:captions[e.type][1],priority,until:this.o.effects.time+(priority>=2?2.4:1.4)};}
  }
  update(g,dt){
-  const o=this.o,fx=o.effects,t=fx.time,reduced=o.reduced;this.display.step(g,dt);this.clock+=dt;
+  const o=this.o,fx=o.effects,t=fx.time,reduced=o.reduced;this.display.step(g,dt);this.clock+=dt;this.updateShotGuides(g,t,reduced);
   if(this.clock>.055){
    this.clock=0;this.display.draw(this.scoreGlass.c,g,t);this.scoreGlass.texture.needsUpdate=true;
    this.display.drawMission(this.missionGlass.c,g,t);
@@ -116,7 +129,7 @@ export class FactoryStage{
   }
   for(let i=0;i<o.pops.length;i++){
    const p=o.pops[i],hit=fx.hit('pop-'+i),color=new T.Color(palette[i]);p.mat.color.copy(color);p.mat.emissive.copy(color);p.mat.emissiveIntensity=.7+(g.ingredients[i]?.6:0)+hit*3;
-   p.fruits.forEach((f,n)=>f.visible=n===[1,3,0][i]);p.capGroup.scale.set(1+hit*.1,1-hit*.13,1+hit*.1);
+   p.fruits.forEach((f,n)=>f.visible=n===[1,3,0][i]);p.capGroup.scale.set(1+hit*.1,1-hit*.13,1+hit*.1);if(g.orders?.frenzy)p.mat.emissiveIntensity+=reduced?.4:.8+.35*Math.sin(t*4+i);
   }
   this.spinner.rotation.x=g.spinnerAngle||0;this.spinnerPlate.material.emissiveIntensity=.4+Math.min(2,Math.abs(g.spinnerVelocity||0)/25);
   this.targets.forEach((target,i)=>{const hit=fx.hit('target-'+i);target.plate.position.y=g.bank[i]?.9:3-hit*2;target.plate.rotation.z=(i<2?-1:1)*hit*.28;target.mat.emissiveIntensity=(g.bank[i]?2:.35)+hit*3;});
@@ -126,7 +139,7 @@ export class FactoryStage{
   this.gears.forEach((gear,i)=>gear.rotation.y=reduced?0:(i?-1:1)*t*(g.boost>0?3.5:.45));
   const show=fx.show,phase=show?(t-show.start)/show.duration:0;
   for(let i=0;i<64;i++){
-   const color=new T.Color(g.rush?JUICES[(Math.floor(i/8+t*2))%4].color:g.boost>0?'#ffd474':i%4?'#b4ff85':'#bd83ff');
+   const color=new T.Color(g.rush?JUICES[(Math.floor(i/8+t*2))%4].color:g.orders?.frenzy?'#ffbd68':g.orders?.jackpotReady?'#ffd17a':g.boost>0?'#ffd474':i%4?'#b4ff85':'#bd83ff');
    let brightness=reduced?.7:.5+.35*(.5+.5*Math.sin(i*.7-t*4));
    if(show&&!reduced)brightness+=Math.pow(Math.max(0,Math.cos(i*.36-phase*Math.PI*8)),5)*2.1;
    color.multiplyScalar(brightness);this.leds.setColorAt(i,color);

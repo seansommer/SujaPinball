@@ -23,7 +23,8 @@ export class PinballAudio{
  bell(note,volume=.09,decay=.2){for(const[ratio,gain]of[[1,1],[2.71,.35],[5.43,.12]])this.tone(note*ratio,decay/Math.sqrt(ratio),volume*gain,'sine');}
  steam(volume=.08,duration=.25,frequency=850){this.crack(volume,duration,frequency);this.tone(110,duration,.035,'triangle',0,55);}
  update(game,dt){
-  if(!this.ctx||!this.active||!game.active){this.stopRolling();return;}
+  if(!this.ctx||!this.active||!game.active){this.frenzyBeat=0;this.stopRolling();return;}
+  if(game.orders?.frenzy){this.frenzyBeat=(this.frenzyBeat||0)+dt;if(this.frenzyBeat>=.5){this.frenzyBeat%=.5;this.tone(73.42,.095,.055,'triangle',0,42);this.crack(.022,.025,1900);}}else this.frenzyBeat=0;
   const balls=game.balls.filter(b=>['free','ramp','launch'].includes(b.state));
   const speed=balls.reduce((sum,b)=>sum+Math.hypot(b.vx||0,b.vy||0),0),meanX=balls.length?balls.reduce((sum,b)=>sum+b.x,0)/balls.length:50;
   if(!this.rolling){
@@ -40,6 +41,14 @@ export class PinballAudio{
   if(t-(this.lastEffect[e.type]??-100)<interval)return;this.lastEffect[e.type]=t;
   const ingredient=[293.66,349.23,440][e.index||0];
   switch(e.type){
+   case'order-start':this.bell(587.33,.06,.2);this.bell(880,.045,.2);break;
+   case'order-progress':this.bell(440+e.progress*73.42,.065,.16);break;
+   case'order-complete':this.chord([293.66,440,587.33,880,1174.66],.055,.11);this.steam(.08,.24,1600);break;
+   case'delivery-ready':this.chord([440,587.33,880,1174.66],.09,.1);this.tone(110,.35,.06,'triangle',0,440);break;
+   case'order-tick':this.bell(e.seconds<=3?880:587.33,e.seconds<=3?.055:.025,.07);if(e.seconds<=3)this.tone(1174.66,.045,.025,'sine',.12);break;
+   case'delivery-jackpot':this.tone(73.42,.6,.16,'sine',0,36.71);this.chord([293.66,349.23,440,587.33,698.46,880,1174.66],.055,.14);this.steam(.12,.4,1200);break;
+   case'order-expired':case'delivery-expired':this.chord([587.33,440],.1,.035);break;
+   case'frenzy-end':this.chord([880,587.33,440],.07,.065);break;
    case'flipper-up':this.sample('flipper',.58,1.02+(e.index||0)*.04);this.tone(76,.045,.12,'triangle',0,44);this.crack(.055,.025,2200);break;
    case'flipper-down':this.sample('flipper',.2,.72);this.tone(58,.055,.05,'sine');break;
    case'flipper-hit':this.crack(.07,.035,1900);this.bell(380+(e.index||0)*37,.045,.08);break;

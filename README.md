@@ -2,6 +2,16 @@
 
 Fresh juice. Full tilt.
 
+Golden Factory Orders add an escalating route through the table: harvest fruit,
+spin the press, make a conveyor loop, and tour distinct shots. Fill three orders
+to light a Delivery Jackpot at the bottle. Claim it for 20,000+ points, a second
+ball, and 20 seconds of Factory Frenzy with 1,000-point base bumper hits. Orders
+carry progress across balls, relight kickback on completion, and pause with the
+game. Gold beacons, moving shot arrows, an integrated countdown display, and
+procedural countdown/fanfare/pressure sounds make the progression readable.
+New mode statistics appear in the run recap; the shared saved-score format and
+Firebase rules are unchanged.
+
 The cabinet update fills the phone play area, places rolling score digits and
 animated shot displays inside the machine, and offers a perspective cabinet
 camera plus an 85° near-overhead option. Fruit toys, moving conveyor slats,

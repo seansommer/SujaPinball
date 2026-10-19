@@ -6,10 +6,10 @@ export class CabinetDisplay{
  draw(c,game,time,w=1024,h=240){
   c.clearRect(0,0,w,h);c.save();c.scale(w/1024,h/240);
   c.fillStyle='#021410';c.fillRect(0,0,1024,240);
-  const color=game.rush?'#e2bdff':game.recipe.color;
+  const color=game.rush?'#e2bdff':game.orders?.frenzy?'#ffd17a':game.recipe.color;
   c.strokeStyle=color;c.lineWidth=3;c.strokeRect(5,5,1014,230);
   c.fillStyle='#b0d5b9';c.font='700 20px Arial';c.textAlign='left';c.fillText('SUJA  /  THE JUICE FACTORY',28,33);
-  c.textAlign='right';c.fillStyle=color;c.fillText(game.rush?'RAINBOW RUSH':game.recipe.name,995,33);
+  c.textAlign='right';c.fillStyle=color;c.fillText(game.rush?'RAINBOW RUSH':game.orders?.frenzy?'FACTORY FRENZY':game.recipe.name,995,33);
   c.save();c.beginPath();c.rect(25,45,730,128);c.clip();
   const value=Math.max(0,this.score),count=Math.max(7,String(Math.floor(game.score)).length),digits=String(Math.floor(value)).padStart(count,'0'),cell=650/count;
   c.font=`900 ${Math.min(117,cell*1.28)}px "Barlow Condensed", "Arial Narrow", Arial`;c.textAlign='center';
@@ -26,7 +26,7 @@ export class CabinetDisplay{
   c.fillStyle=color;c.textAlign='center';c.font='900 94px "Barlow Condensed", Arial';c.fillText((game.multiplier*(game.rush?3:1)*(game.boost>0?2:1))+'×',890,143);
   c.fillStyle='#c9ddca';c.textAlign='left';c.font='700 20px Arial';c.fillText(game.mode==='practice'?'PRACTICE · FREE PLAY':`BALL ${game.ballNumber} / ${3+game.extraBalls}`,28,205);
   c.textAlign='right';c.fillStyle=game.rush?'#e2bdff':game.boost>0?'#ffd46b':'#b8d5ba';
-  c.fillText(game.rush?`JACKPOTS  ·  ${Math.ceil(game.rush)}s`:game.boost>0?`POWER PRESS  ·  ${Math.ceil(game.boost)}s`:game.combo>1?`${game.combo} HIT STREAK`:'FRESH JUICE. FULL TILT.',995,205);
+  c.fillText(game.rush?`JACKPOTS  ·  ${Math.ceil(game.rush)}s`:game.orders?.frenzy?`SUPER BUMPERS  ·  ${Math.ceil(game.orders.remaining)}s`:game.boost>0?`POWER PRESS  ·  ${Math.ceil(game.boost)}s`:game.combo>1?`${game.combo} HIT STREAK`:'FRESH JUICE. FULL TILT.',995,205);
   // Very faint dot-matrix glass texture; the score stays crisp at phone size.
   c.fillStyle='#00000019';for(let y=8;y<232;y+=6)c.fillRect(8,y,1008,1);
   c.restore();
@@ -35,6 +35,19 @@ export class CabinetDisplay{
   c.clearRect(0,0,w,h);c.save();c.scale(w/1024,h/180);
   const color=game.boost>0?'#ffd579':game.recipe.color;
   c.fillStyle='#031a16e8';c.fillRect(0,0,1024,180);c.strokeStyle=color;c.lineWidth=3;c.strokeRect(4,4,1016,172);
+  const order=game.orders;
+  if(order&&['order','delivery','frenzy'].includes(order.phase)){
+   const urgent=order.remaining<=8&&!order.frenzy,ink=urgent?'#ffb181':'#ffd17a';
+   c.strokeStyle=ink;c.strokeRect(4,4,1016,172);c.textAlign='center';c.fillStyle=ink;c.font='900 44px "Barlow Condensed",Arial';c.fillText(order.title,512,49,950);
+   c.font='800 37px Arial';c.fillStyle='#e5f3d7';c.fillText(order.hint,512,84,960);
+   c.textAlign='left';c.fillStyle=ink;c.font='800 28px Arial';c.fillText(order.jackpotReady?'20,000+ JACKPOT':order.frenzy?'1,000+ PER BUMPER':`ORDER ${order.pack+1} / 3`,40,116);
+   c.textAlign='center';if(order.phase==='order')c.fillText(`${order.progress} / ${order.goal.target}`,512,116);
+   c.textAlign='right';c.fillText(`${Math.ceil(order.remaining)}s`,984,116);
+   const total=order.jackpotReady?25:order.frenzy?20:order.goal.duration;
+   c.fillStyle='#244032';c.fillRect(40,131,944,12);c.fillStyle=ink;c.fillRect(40,131,944*Math.min(1,order.remaining/total),12);
+   c.textAlign='center';c.font='700 16px Arial';c.fillStyle='#aac7ad';c.fillText(order.jackpotReady?'GOLDEN BOTTLE RELEASES A SECOND BALL':order.frenzy?'KEEP THE JUICE FLOWING':game.boost>0?'POWER PRESS · DOUBLE POINTS':`PRESS ${Math.round(game.pressure||0)}%  ·  ${game.kickback?'KICKBACK READY':'FILL AN ORDER TO RELIGHT KICKBACK'}`,512,166,950);
+   c.restore();return;
+  }
   c.textAlign='center';c.fillStyle=color;c.font='900 42px "Barlow Condensed", Arial';
   c.fillText(game.rush?'BOTTLE JACKPOTS':game.bottleReady?'SHOOT THE BOTTLE':game.boost>0?'POWER PRESS · DOUBLE POINTS':'COLLECT THE THREE INGREDIENTS',512,50);
   for(let i=0;i<3;i++){

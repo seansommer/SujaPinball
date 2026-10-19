@@ -1,4 +1,5 @@
 import{R,JUICES,BUMPERS,BANK,GATES,WALLS,SLINGS,FLIPPERS,clamp,nearest,rampPoint}from'./table.js';
+import{FactoryOrders}from'./orders.js';
 const TAU=Math.PI*2;
 export class Pinball{
  constructor({seed=1,mode='arcade',onEvent=()=>{}}={}){
@@ -6,12 +7,13 @@ export class Pinball{
   this.score=0;this.ballNumber=1;this.reserves=2;this.extraBalls=0;this.bottles=0;this.rushes=0;this.ramps=0;this.bumperHits=0;this.skillShots=0;this.maxCombo=0;this.combo=0;this.lastScore=-10;this.multiplier=1;this.juice=0;this.ingredients=[false,false,false];this.bank=[false,false,false,false];this.gates=[false,false,false];this.skillGate=this.seed%3;this.saver=0;this.rush=0;this.tilt=0;this.heat=0;this.lastNudge=-10;this.capping=0;this.nextExtra=75000;this.transition=0;
   this.addBall('shooter');
   this.pressure=0;this.boost=0;this.spinnerAngle=0;this.spinnerVelocity=0;this.kickback=true;this.lastShot=null;this.shotChain=0;
+  this.orders=new FactoryOrders(this);
  }
  get active(){return!this.paused&&this.state==='playing';}
  get recipe(){return JUICES[this.juice];}
  get bottleReady(){return this.ingredients.every(Boolean);}
  random(){let t=this.randomState+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;}
- emit(type,data={}){this.onEvent({type,time:this.time,color:this.recipe.color,...data});}
+ emit(type,data={}){const event={type,time:this.time,color:this.recipe.color,...data};this.onEvent(event);this.orders?.event(event);}
  addBall(state='free',x=94,y=165,vx=0,vy=0){const b={id:this.nextId++,x,y,px:x,py:y,vx,vy,r:R,state,age:0,routeTime:0,cooldowns:{},still:0,skill:state==='shooter'};this.balls.push(b);return b;}
  setFlipper(index,down){if(this.inputs[index]===down)return;this.inputs[index]=down;if(down&&this.state==='ready'){this.skillGate=(this.skillGate+(index?1:2))%3;this.emit('select');}if(this.active&&!this.tilt)this.emit(down?'flipper-up':'flipper-down',{index});}
  release(){this.inputs=[false,false];}
@@ -22,8 +24,10 @@ export class Pinball{
  registerShot(kind,x,y){const chain=this.lastShot&&this.lastShot.kind!==kind&&this.time-this.lastShot.time<6;this.shotChain=chain?Math.min(5,this.shotChain+1):1;this.lastShot={kind,time:this.time};if(chain)this.emit('shot-chain',{x,y,chain:this.shotChain,points:this.addScore(700*this.shotChain)});}
  spin(b){if(this.tilt)return;const turns=Math.max(4,Math.round(Math.abs(b.vy)/9));this.spinnerVelocity=Math.sign(b.vy)*Math.min(65,turns*5);this.chargePress(12);this.emit('spinner',{x:23,y:94,turns,points:this.addScore(turns*90)});this.registerShot('spinner',23,94);}
  rescueOutlane(b){if(!this.kickback||this.tilt||b.state!=='free'||b.y<160||b.vy<=0||!(b.x<17||b.x>81&&b.x<89))return false;this.kickback=false;const left=b.x<50;b.x=left?18:80;b.y=147;b.vx=left?22:-22;b.vy=-125;this.emit('kickback',{x:b.x,y:b.y,points:this.addScore(1000)});return true;}
- hitBumper(index,b){const pop=BUMPERS[index],points=this.addScore(350);this.bumperHits++;const fresh=!this.ingredients[index];if(!this.rush)this.ingredients[index]=true;this.chargePress(fresh?7:3);this.emit('bumper',{x:pop.x,y:pop.y,index,points,fresh});if(fresh&&!this.rush&&this.bottleReady)this.emit('bottle-ready',{x:50,y:80});}
+ hitBumper(index,b){const pop=BUMPERS[index],points=this.addScore(this.orders.frenzy?1000:350);this.bumperHits++;const fresh=!this.ingredients[index];if(!this.rush)this.ingredients[index]=true;this.chargePress(fresh?7:3);this.emit('bumper',{x:pop.x,y:pop.y,index,points,fresh});if(fresh&&!this.rush&&this.bottleReady)this.emit('bottle-ready',{x:50,y:80});}
  collectBottle(b){
+  if(!this.active||this.tilt||b.state!=='free')return false;
+  if(this.orders.jackpotReady)return this.orders.claim(b);
   if(this.tilt||(!this.rush&&!this.bottleReady))return false;
   b.state='bottle';b.routeTime=0;b.x=50;b.y=82;b.vx=b.vy=0;this.capping=1.2;
   const jackpot=this.rush>0,points=this.addScore(jackpot?15000:10000);if(!jackpot)this.bottles++;
@@ -47,7 +51,7 @@ export class Pinball{
   for(let i=0;i<2;i++){const f=this.flippers[i],target=this.inputs[i]&&!this.tilt&&this.state!=='over'?f.up:f.rest,old=f.angle;f.angle+=(target-f.angle)*Math.min(1,dt*(this.inputs[i]?42:24));f.omega=(f.angle-old)/dt;}
   if(this.state!=='playing')return;
   this.duration+=dt;this.saver=Math.max(0,this.saver-dt);this.spinnerAngle+=this.spinnerVelocity*dt;this.spinnerVelocity*=Math.exp(-dt*1.1);if(this.boost>0){this.boost=Math.max(0,this.boost-dt);if(!this.boost)this.emit('pressure-end');}if(this.rush>0){this.rush=Math.max(0,this.rush-dt);if(!this.rush)this.emit('rainbow-end');}
-  if(this.time-this.lastScore>2.5)this.combo=0;
+  this.orders.step(dt);if(this.time-this.lastScore>2.5)this.combo=0;
   for(const b of [...this.balls]){
    b.px=b.x;b.py=b.y;b.age+=dt;
    if(b.state==='ramp'){b.routeTime+=dt;const p=rampPoint(b.routeTime/1.65);Object.assign(b,p);if(b.routeTime>=1.65){b.state='free';b.z=0;b.x=34;b.y=132;b.vx=3+(this.random()-.5)*8;b.vy=28;this.emit('ramp-exit',{x:b.x,y:b.y});}continue;}
@@ -83,6 +87,7 @@ export class Pinball{
  drain(b){
   const i=this.balls.indexOf(b);if(i<0)return;this.balls.splice(i,1);this.emit('drain',{x:b.x,y:176});if(this.balls.length)return;
   if(this.saver>0&&!this.tilt){const saved=this.addBall('launch');saved.vy=-145;saved.power=.7;this.saver=Math.max(0,this.saver-2);this.emit('saved');return;}
+  this.orders.ballLost();
   if(this.mode==='practice'||this.reserves>0){if(this.mode!=='practice')this.reserves--;this.ballNumber++;this.state='between';this.transition=1.5;this.multiplier=1;this.rush=0;this.emit('next-ball',{ballNumber:this.ballNumber});}
   else{this.state='over';this.release();this.emit('over',{result:this.result()});}
  }
