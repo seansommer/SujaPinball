@@ -5,6 +5,8 @@ import{RenderPass}from'three/addons/postprocessing/RenderPass.js';
 import{UnrealBloomPass}from'three/addons/postprocessing/UnrealBloomPass.js';
 import{JUICES,BUMPERS,BANK,GATES,WALLS,SLINGS,FLIPPERS,RAMP,rampPoint,clamp}from'./table.js';
 import{Effects}from'./effects.js';
+import{fitCabinet}from'./camera.js';
+import{FactoryStage}from'./factory-stage.js';
 const position=(x,y,h=0)=>new T.Vector3(x-50,h,y-90);
 function canvasTexture(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;return t;}
 function glowTexture(){return canvasTexture(64,64,c=>{const g=c.createRadialGradient(32,32,0,32,32,31);g.addColorStop(0,'#fff');g.addColorStop(.18,'#ffffffdf');g.addColorStop(.5,'#ffffff55');g.addColorStop(1,'#fff0');c.fillStyle=g;c.fillRect(0,0,64,64);});}
@@ -13,12 +15,13 @@ export class PinballScene{
   this.canvas=canvas;this.effects=new Effects();this.quality='auto';this.reduced=false;this.ballMeshes=new Map();this.juice=-1;this.scene=new T.Scene();this.scene.background=new T.Color('#020b12');this.scene.fog=new T.FogExp2('#020b12',.0027);
   this.renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));this.renderer.outputColorSpace=T.SRGBColorSpace;this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.2;this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=T.PCFSoftShadowMap;
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();onContextLost();});
-  this.camera=new T.OrthographicCamera(-60,60,95,-95,.1,700);this.scene.add(new T.HemisphereLight('#d5fff5','#15222d',2));
+  this.camera=new T.PerspectiveCamera(34,1,.1,1200);this.view='cabinet';this.scene.add(new T.HemisphereLight('#d5fff5','#15222d',2.5));
   const env=new RoomEnvironment(),pmrem=new T.PMREMGenerator(this.renderer);this.envMap=pmrem.fromScene(env,.03).texture;this.scene.environment=this.envMap;env.dispose();pmrem.dispose();this.scene.environmentIntensity=.85;
   const key=new T.DirectionalLight('#e5fff4',3.1);key.position.set(-50,120,65);key.castShadow=true;key.shadow.mapSize.set(1024,1024);Object.assign(key.shadow.camera,{left:-65,right:65,top:110,bottom:-110,near:1,far:280});key.shadow.bias=-.0003;key.shadow.normalBias=.25;this.scene.add(key);this.key=key;
   const purple=new T.PointLight('#b365ff',3800,230,2);purple.position.set(45,28,-45);this.scene.add(purple);const green=new T.PointLight('#9aff78',4200,210,2);green.position.set(-35,35,20);this.scene.add(green);this.rushLight=new T.PointLight('#cfacff',0,160,2);this.rushLight.position.set(0,35,-10);this.scene.add(this.rushLight);
   this.metal=new T.MeshStandardMaterial({color:'#bcc8d2',metalness:.96,roughness:.2});this.dark=new T.MeshStandardMaterial({color:'#11282b',metalness:.75,roughness:.34});this.gold=new T.MeshStandardMaterial({color:'#d2ad5a',metalness:.8,roughness:.24});this.lime=new T.MeshStandardMaterial({color:'#b8f466',emissive:'#7edb37',emissiveIntensity:.55,metalness:.35,roughness:.28});this.purple=new T.MeshStandardMaterial({color:'#8f64d7',emissive:'#8e44ee',emissiveIntensity:1.5,metalness:.35,roughness:.27});this.glow=glowTexture();
   this.buildTable();this.buildBumpers();this.buildBottle();this.buildRamp();this.buildFlippers();this.buildInserts();this.buildParticles();
+  this.factory=new FactoryStage(this);
   this.composer=new EffectComposer(this.renderer);this.composer.addPass(new RenderPass(this.scene,this.camera));this.bloom=new UnrealBloomPass(new T.Vector2(600,900),.48,.36,1.05);this.composer.addPass(this.bloom);
   this.observer=new ResizeObserver(()=>this.resize());this.observer.observe(canvas);this.resize();
  }
@@ -90,8 +93,9 @@ export class PinballScene{
  }
  buildParticles(){this.particleSprites=Array.from({length:150},()=>{const m=new T.Sprite(new T.SpriteMaterial({map:this.glow,transparent:true,depthWrite:false,blending:T.AdditiveBlending}));m.visible=false;this.scene.add(m);return m;});}
  setQuality(q,reduced=false){this.quality=q;this.reduced=reduced;this.effects.reduced=reduced;this.renderer.setPixelRatio(Math.min(devicePixelRatio,q==='low'?1:q==='high'?2:1.6));this.renderer.shadowMap.enabled=q!=='low';this.resize();}
- resize(){const w=this.canvas.clientWidth,h=this.canvas.clientHeight;if(!w||!h)return;this.width=w;this.height=h;this.renderer.setSize(w,h,false);this.composer?.setSize(w,h);const aspect=w/h,tilt=clamp(.2+(aspect-.56)*.4,.2,.67),viewH=Math.max(184*Math.cos(tilt)+22,111/aspect);this.camera.left=-viewH*aspect/2;this.camera.right=viewH*aspect/2;this.camera.top=viewH/2;this.camera.bottom=-viewH/2;this.camera.position.set(0,230,230*Math.tan(tilt));this.camera.lookAt(0,1,-1);this.camera.updateProjectionMatrix();}
- event(e){this.effects.event(e);if(e.type==='bottle'||e.type==='jackpot')this.bottleColor=e.color;}
+ setView(view){this.view=view;this.resize();}
+ resize(){const w=this.canvas.clientWidth,h=this.canvas.clientHeight;if(!w||!h)return;this.width=w;this.height=h;this.renderer.setSize(w,h,false);this.composer?.setSize(w,h);this.rig=fitCabinet(this.camera,w,h,this.view,(document.querySelector('.suite-header')?.getBoundingClientRect().height||44)+3);}
+ event(e){this.effects.event(e);this.factory.event(e);if(e.type==='bottle'||e.type==='jackpot')this.bottleColor=e.color;}
  clear(){this.effects.clear();for(const m of this.ballMeshes.values()){this.scene.remove(m.mesh);for(const s of m.trail)this.scene.remove(s);}this.ballMeshes.clear();}
  project(x,y,z=4){const v=position(x,y,z).project(this.camera),r=this.canvas.getBoundingClientRect();return{x:(v.x+1)*r.width/2+r.left,y:(1-v.y)*r.height/2+r.top};}
  render(game,dt){
@@ -111,6 +115,7 @@ export class PinballScene{
    item.positions.unshift(item.mesh.position.clone());item.positions.length=Math.min(10,item.positions.length);item.trail.forEach((s,i)=>{const p=item.positions[Math.min(i,item.positions.length-1)];s.position.copy(p);s.scale.setScalar(b.r*(2.3-i*.12));s.material.opacity=!this.reduced&&b.state!=='shooter'&&b.state!=='bottle'?.2*(1-i/9):0;});
   }
   this.particleSprites.forEach((m,i)=>{const p=fx.particles[i];m.visible=!!p;if(p){m.position.copy(position(p.x,p.y,Math.max(.2,p.z)));m.material.color.set(p.color);m.material.opacity=Math.min(1,p.life*2);m.scale.setScalar(p.size*3);}});
-  const offset=!this.reduced?Math.sin(t*58)*fx.shake*.3:0;this.camera.position.x=offset;this.camera.lookAt(offset,1,-1);if(this.quality==='low')this.renderer.render(this.scene,this.camera);else this.composer.render();
+  this.factory.update(game,dt);
+  const offset=!this.reduced?Math.sin(t*58)*fx.shake*.2:0;this.camera.position.copy(this.rig.position);this.camera.position.x+=offset;this.camera.lookAt(this.rig.target.clone().add(new T.Vector3(offset,0,0)));if(this.quality==='low')this.renderer.render(this.scene,this.camera);else this.composer.render();
  }
 }

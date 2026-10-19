@@ -6,7 +6,7 @@ translucent juice, and a giant SUJA bottle that fills and caps as a live toy.
 
 Original illustrations were generated with OpenAI's built-in image-generation
 tool for this project. The PNG masters are retained here; optimized derivatives
-serve the game. No Runway assets are used in this game.
+serve the game. No Runway images or video are used. Original audio provenance is in audio/README.md.
 
 | Master | Runtime asset | Purpose |
 | --- | --- | --- |

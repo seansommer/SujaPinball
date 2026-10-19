@@ -17,3 +17,24 @@ dialog{color:var(--ink);background:var(--surface);border:1px solid var(--border)
 @media(max-height:560px) and (min-aspect-ratio:1/1){#arcade{grid-template-rows:58px minmax(0,1fr) 58px}.scoreboard{padding:5px 20px}.score-cell strong{font-size:1.6rem}.score-cell>span{display:none}.recipe-cell>small{font-size:.43rem}#ingredients{margin:4px 0}#mission{font-size:.38rem}.ball-cell strong{font-size:2rem}.controls{padding:5px 20px;gap:20px;grid-template-columns:1fr 150px 1fr}.center-controls{min-height:46px;flex-direction:row;gap:6px}#plunge,#nudge{flex:1;min-height:40px;font-size:.75rem}#nudge span{display:none}.flipper-control b{font-size:.8rem}.cabinet-note{display:none}.home-console{left:25px;bottom:65px;width:250px}.home-console .eyebrow{display:none}.mode-select button{min-height:31px;font-size:1.6rem}#mode-detail{font-size:.55rem;margin:8px 0}.home-console #start{min-height:44px;font-size:1.95rem}.start-hint{display:none}.home-footer{bottom:7px;padding-top:5px}.home-footer p{display:none}.home-footer .free-play{display:block;font-size:.58rem}.home-footer button{font-size:.65rem;min-height:30px}.home-footer nav{gap:15px}.home-footer #music-toggle{font-size:.9rem;padding:3px 10px}.home-best{bottom:80px}.home-best strong{font-size:2rem}#announcement{top:17%;width:65%}#announcement strong{font-size:2.4rem}#announcement p{font-size:.6rem}#ready-tip{bottom:12px}#ready-tip strong{font-size:1rem}#ready-tip span{font-size:.5rem}#countdown strong{font-size:6rem}#countdown p{font-size:.45rem;margin:4px}#countdown>span{font-size:.55rem}}
 .reduced-fx *{animation:none!important;transition:none!important}.reduced-fx .float{display:none}@media(prefers-reduced-motion:reduce){.home-art,.home-console #start span{animation:none}}
 @media(max-aspect-ratio:1/1){.home-art{background-image:url('./assets/cover-portrait.webp');background-size:cover;background-position:50% 0}.home-shade{background:linear-gradient(0deg,#020c13fa 0%,#020c13bb 28%,#020c1322 53%,transparent 74%)}}
+
+/* Cabinet edition: the playable machine owns the screen. Score glass and
+   shot displays are rendered inside the cabinet, not in a separate app bar. */
+body.flying #game{position:fixed;inset:0;flex:none}
+body.flying #arcade{display:block;inset:0}
+body.flying #stage{position:absolute;inset:0 0 calc(76px + env(safe-area-inset-bottom));background:#02120c}
+body.flying .controls{position:absolute;inset:auto 0 0;height:calc(76px + env(safe-area-inset-bottom));padding:7px max(10px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));grid-template-columns:1fr 88px 1fr;gap:8px;background:linear-gradient(#153b27,#061810);border-top:2px solid #d4ba6b88;box-shadow:0 -8px 25px #001b0c66}
+body.flying .flipper-control{border-radius:8px;background:linear-gradient(#396631,#183b22);border:1px solid #d2ef9b88;border-bottom:4px solid #061b0e;box-shadow:inset 0 1px 0 #eeffc155,0 2px 10px #0008}
+body.flying .flipper-control[aria-pressed=true]{background:linear-gradient(#a9e76c,#4b7b30);color:#092514;box-shadow:0 0 25px #adff6b55,inset 0 1px 0 #ffffc9;transform:translateY(2px)}
+body.flying .flipper-control b{font-size:.93rem;letter-spacing:.08em}
+body.flying .flipper-control small{display:none}
+body.flying .center-controls{min-height:55px}
+body.flying .scoreboard,body.flying #announcement{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);padding:0;white-space:nowrap;pointer-events:none}
+body.flying .cabinet-note{display:none}
+body.flying .stage-vignette{box-shadow:inset 0 0 25px #00140b33}
+body.flying #ready-tip{bottom:15px;width:270px;padding:6px 10px}
+body.flying #ready-tip strong{font-size:1rem}
+body.flying #ready-tip span{font-size:.55rem}
+body.flying #table-status{bottom:3px;gap:5px}
+body.flying #table-status>span{font-size:.55rem;padding:3px 6px;background:#032317cc;border-radius:2px}
+@media(max-height:500px) and (orientation:landscape){body.flying #stage{bottom:60px}body.flying .controls{height:60px;padding:5px 16px;grid-template-columns:1fr 130px 1fr}body.flying .center-controls{min-height:45px;flex-direction:row}body.flying .flipper-control b{font-size:.85rem}}

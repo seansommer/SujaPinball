@@ -1,41 +1,29 @@
-SUJA PINBALL! — music, samples and voices
+SUJA PINBALL — CABINET AUDIO
 
-All external recordings below were released by their creators under CC0 1.0:
-https://creativecommons.org/publicdomain/zero/1.0/
-Original pinball chimes, impact layers, ramp sweeps and musical reward fanfares
-are synthesized by this game's Web Audio engine. Music defaults to 17%,
-effects to 80%, and voices to 85%; music ducks while a voice is playing.
+Original Pinball recordings
+Fresh Pressed Groove (table.mp3, menu.mp3)
+Rainbow Rush (rainbow.mp3)
+Custom juice-factory cabinet callouts (voice-*.mp3)
+Created specifically for SUJA Pinball through Runway on October 19, 2026.
+Full masters and provenance are retained in art/audio/.
 
-Music — Juhani Junkala / SubspaceAudio
-5 Chiptunes (Action) / Retro Game Music Pack
-https://opengameart.org/content/5-chiptunes-action
-https://opengameart.org/sites/default/files/5%20Action%20Chiptunes%20By%20Juhani%20Junkala.zip
-The archive INFO.txt releases these recordings under CC0.
-  menu.mp3    — Title Screen
-  table.mp3   — Level 2
-  rainbow.mp3 — Level 3
-Stereo 44.1 kHz / 128 kbps. Reused from the SUJA Game Center art/audio collection.
-
-Impact Sounds (1.0) — Kenney
+Mechanical recordings
+flipper.mp3, metal.mp3, pop.mp3, drain.mp3
+Adapted from Kenney CC0 Impact Sounds recordings.
+flipper.mp3: impactWood_light_001.ogg
+metal.mp3: impactMetal_light_002.ogg
+pop.mp3: impactSoft_medium_000.ogg
+drain.mp3: impactMetal_medium_002.ogg
 https://kenney.nl/assets/impact-sounds
-https://kenney.nl/media/pages/assets/impact-sounds/87b4ddecda-1677589768/kenney_impact-sounds.zip
-License.txt retained as Kenney-Impact-License.txt.
-  flipper.mp3 — Audio/impactWood_light_001.ogg
-  metal.mp3   — Audio/impactMetal_light_002.ogg
-  pop.mp3     — Audio/impactSoft_medium_000.ogg
-  drain.mp3   — Audio/impactMetal_medium_002.ogg
-Converted to mono 32 kHz / 80 kbps. Retrieved October 19, 2026 (UTC).
+See Kenney-Impact-License.txt.
 
-Voiceover Pack — Kenney
-https://kenney.nl/assets/voiceover-pack
-https://opengameart.org/content/voiceover-pack-40-lines
-https://opengameart.org/sites/default/files/Voiceover%20Pack.zip
-The archive License.txt releases the recordings under CC0.
-  voice-congratulations.mp3    — Male/congratulations.ogg
-  voice-objective-achieved.mp3 — Male/objective_achieved.ogg
-  voice-go.mp3                 — Male/go.ogg
-  voice-look-out.mp3           — Male/war_look_out.ogg
-  voice-game-over.mp3          — Male/game_over.ogg
-Trimmed and normalized mono files reused from the Sujalaga audio collection.
+Original real-time sound design
+Continuous speed-sensitive ball rolling, solenoid body, rubber impacts,
+spring pull, metallic overtones, spinner ratchets, ingredient bells,
+target-bank reset, orbit/combo stings, cold-press pump, bottle fizz,
+Power Press, kickback, ball-save, tilt, and jackpot layers are synthesized
+by the game. They require no media-generation service during play.
 
-No recordings from commercial pinball machines or other arcade games are used.
+Music, effects and cabinet callouts have independent volume controls.
+Backgrounding or pausing immediately stops music, callouts, rolling and
+scheduled effects. Player recordings are not sent to an audio service.

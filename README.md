@@ -2,6 +2,18 @@
 
 Fresh juice. Full tilt.
 
+The cabinet update fills the phone play area, places rolling score digits and
+animated shot displays inside the machine, and offers a perspective cabinet
+camera plus an 85° near-overhead option. Fruit toys, moving conveyor slats,
+gears, reactive light chases, electric slingshots, expanding impact rings,
+and score bursts connect hits to visible reactions.
+
+Timed flipper shots reach the upper table. A juice spinner, linked-shot
+combos, a 12-second Power Press double-score mode, and a one-use outlane
+kickback add shot choices and longer rallies. Original Pinball music and
+cabinet callouts replace the shared Sujalaga recordings; rolling and layered
+mechanical sounds respond to actual play.
+
 [Play in SUJA Game Center](https://seansommer.github.io/sujagamecenter/pinball.html)
 
 A complete portrait-friendly pinball arcade with an original juice-factory
@@ -40,7 +52,7 @@ to enable crew records. Local arcade and practice work independently.
 Original artwork, generation briefs, and masters: [Art Bible](art/README.md).
 Music and sound provenance: [audio credits](assets/audio/CREDITS.txt).
 Original pinball geometry, physics, interface, and audio synthesis accompany
-CC0 recordings by Juhani Junkala and Kenney. No paid video generation is used.
+CC0 mechanical recordings by Kenney. The original Pinball soundtrack and cabinet callouts have their full masters and provenance in `art/audio/`.
 
 Build: `npm ci && npm test && npm run build`. The Game Center workflow checks
 out a pinned revision of this repository and publishes `dist/` beneath

@@ -44,3 +44,13 @@
 @media(max-height:550px) and (orientation:landscape){.suite-header{flex-wrap:nowrap;gap:7px}.suite-header .suite-title{display:none}.suite-header .game-tools{width:auto;border-top:0;border-left:1px solid var(--suite-line);padding:0 0 0 7px}.suite-header .suite-player{max-width:120px}.suite-header .game-tools button{height:44px}}
 /* Keep the flight area tall on phones while preserving all shared navigation. */
 @media(max-width:760px){.suite-header{flex-wrap:nowrap;gap:5px}.suite-header .suite-title{display:none}.suite-header .suite-player{width:44px;min-width:44px;padding:4px;justify-content:center}.suite-header .suite-player-name{display:none}.suite-header .game-tools{width:auto;border-top:0;border-left:1px solid var(--suite-line);padding:0 0 0 4px;gap:2px}.suite-header .suite-actions{gap:2px}}
+
+/* Navigation sits on the glass instead of subtracting a header from the table. */
+body.flying .suite-header{position:fixed;inset:0 0 auto;min-height:44px;height:calc(44px + env(safe-area-inset-top));padding:env(safe-area-inset-top) max(8px,env(safe-area-inset-right)) 0 max(8px,env(safe-area-inset-left));gap:5px;flex-wrap:nowrap;background:linear-gradient(#032115ee,#03211566,transparent);color:#e5ffd6;border:0;pointer-events:none;z-index:15}
+body.flying .suite-header a,body.flying .suite-header button{pointer-events:auto}
+body.flying .suite-home img{width:32px;height:32px;border-radius:7px}
+body.flying .suite-header .suite-title,body.flying .suite-player-name{display:none}
+body.flying .suite-header .suite-actions,body.flying .suite-header .game-tools{gap:3px;width:auto;border:0;padding:0;margin:0}
+body.flying .suite-header .suite-icon,body.flying .suite-header .game-tools button,body.flying .suite-header .suite-player{height:40px;min-height:40px;width:40px;min-width:40px;padding:3px;background:#0d3529bb;border:1px solid #d3f0bd22;backdrop-filter:blur(7px)}
+body.flying .suite-hub img{width:29px;height:29px;border-radius:6px}
+body.flying .suite-header .suite-avatar{width:30px;height:30px}
